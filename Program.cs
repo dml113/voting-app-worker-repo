@@ -7,7 +7,6 @@ using System.Threading;
 using Newtonsoft.Json;
 using Npgsql;
 using StackExchange.Redis;
-using System.IO;
 
 namespace Worker
 {
@@ -17,40 +16,48 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=rds-ca.pem");
+                // 로컬에 있는 인증서 경로 지정
+                var caCertificatePath = "rds-ca.pem";
+
+                var pgsql = OpenDbConnection(
+                    "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
+                    caCertificatePath);
+
                 var redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                 var redis = redisConn.GetDatabase();
 
-                // Keep alive is not implemented in Npgsql yet. This workaround was recommended:
-                // https://github.com/npgsql/npgsql/issues/1214#issuecomment-235828359
                 var keepAliveCommand = pgsql.CreateCommand();
                 keepAliveCommand.CommandText = "SELECT 1";
 
                 var definition = new { vote = "", voter_id = "" };
                 while (true)
                 {
-                    // Slow down to prevent CPU spike, only query each 100ms
                     Thread.Sleep(100);
 
-                    // Reconnect redis if down
-                    if (redisConn == null || !redisConn.IsConnected) {
+                    // Redis 재연결
+                    if (redisConn == null || !redisConn.IsConnected)
+                    {
                         Console.WriteLine("Reconnecting Redis");
                         redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                         redis = redisConn.GetDatabase();
                     }
+
                     string json = redis.ListLeftPopAsync("votes").Result;
                     if (json != null)
                     {
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
                         Console.WriteLine($"Processing vote for '{vote.vote}' by '{vote.voter_id}'");
-                        // Reconnect DB if down
+
+                        // PostgreSQL 재연결
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=rds-ca.pem");
+                            pgsql = OpenDbConnection(
+                                "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
+                                caCertificatePath);
                         }
                         else
-                        { // Normal +1 vote requested
+                        {
                             UpdateVote(pgsql, vote.voter_id, vote.vote);
                         }
                     }
@@ -67,7 +74,7 @@ namespace Worker
             }
         }
 
-        private static NpgsqlConnection OpenDbConnection(string connectionString)
+        private static NpgsqlConnection OpenDbConnection(string connectionString, string caCertificatePath)
         {
             NpgsqlConnection connection;
 
@@ -75,7 +82,19 @@ namespace Worker
             {
                 try
                 {
-                    connection = new NpgsqlConnection(connectionString);
+                    var builder = new NpgsqlConnectionStringBuilder(connectionString)
+                    {
+                        SslMode = SslMode.VerifyFull, // 인증서를 사용하여 SSL 검증
+                        TrustServerCertificate = false
+                    };
+
+                    connection = new NpgsqlConnection(builder.ConnectionString);
+                    connection.ProvideClientCertificatesCallback += certs =>
+                    {
+                        // 인증서 파일 추가
+                        certs.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(caCertificatePath));
+                    };
+
                     connection.Open();
                     break;
                 }
@@ -105,7 +124,6 @@ namespace Worker
 
         private static ConnectionMultiplexer OpenRedisConnection(string hostname)
         {
-            // Use IP address to workaround https://github.com/StackExchange/StackExchange.Redis/issues/410
             var ipAddress = GetIp(hostname);
             Console.WriteLine($"Found redis at {ipAddress}");
 
