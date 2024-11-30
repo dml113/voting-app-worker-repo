@@ -1,0 +1,22 @@
+{
+    "executionRoleArn": "arn:aws:iam::950274644703:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+        {
+            "name": "worker",
+            "image": "<IMAGE1_NAME>",
+            "essential": true,
+            "portMappings": [
+                {
+                    "hostPort":80,
+                    "protocol": "tcp",
+                    "containerPort": 80
+                }
+            ]
+        }
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "networkMode": "awsvpc",
+    "family": "result-task"
+}
