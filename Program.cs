@@ -17,7 +17,7 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=path_to_your_rds-ca.pem");
+                var pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=rds-ca.pem");
                 var redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                 var redis = redisConn.GetDatabase();
 
