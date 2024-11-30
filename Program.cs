@@ -7,6 +7,7 @@ using System.Threading;
 using Newtonsoft.Json;
 using Npgsql;
 using StackExchange.Redis;
+using System.IO;
 
 namespace Worker
 {
@@ -16,7 +17,7 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Server=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;");
+                var pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=path_to_your_rds-ca.pem");
                 var redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                 var redis = redisConn.GetDatabase();
 
@@ -46,7 +47,7 @@ namespace Worker
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Server=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;");
+                            pgsql = OpenDbConnection("Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres;SSL Mode=Require;Trust Server Certificate=true;SslRootCert=rds-ca.pem");
                         }
                         else
                         { // Normal +1 vote requested
