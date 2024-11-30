@@ -16,7 +16,7 @@ RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
 
 WORKDIR /source
 COPY *.csproj .
-COPY rds-ca.pem .
+COPY rds-ca.pem /app/rds-ca.pem
 RUN dotnet restore -a $TARGETARCH
 
 COPY . .
