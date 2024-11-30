@@ -16,7 +16,7 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Server=db.db;Username=postgres;Password=postgres;");
+                var pgsql = OpenDbConnection("Server=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;");
                 var redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                 var redis = redisConn.GetDatabase();
 
@@ -46,7 +46,7 @@ namespace Worker
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Server=db.db;Username=postgres;Password=postgres;");
+                            pgsql = OpenDbConnection("Server=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;");
                         }
                         else
                         { // Normal +1 vote requested
