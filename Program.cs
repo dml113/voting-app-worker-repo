@@ -17,7 +17,7 @@ namespace Worker
             try
             {
                 // 로컬에 있는 인증서 경로 지정
-                var caCertificatePath = "rds-ca.pem";
+                var caCertificatePath = "/app/rds-ca.pem";
 
                 var pgsql = OpenDbConnection(
                     "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
