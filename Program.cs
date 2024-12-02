@@ -16,9 +16,10 @@ namespace Worker
         {
             try
             {
-                // 로컬에 있는 인증서 경로 지정
+                // 인증서 경로 지정
                 var caCertificatePath = "/app/rds-ca.pem";
 
+                // PostgreSQL 및 Redis 연결 초기화
                 var pgsql = OpenDbConnection(
                     "Host=test-postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
                     caCertificatePath);
@@ -69,7 +70,9 @@ namespace Worker
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine($"Unexpected error: {ex}");
+                Console.Error.WriteLine($"Exception: {ex.Message}");
+                Console.Error.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+                Console.Error.WriteLine($"Stack Trace: {ex.StackTrace}");
                 return 1;
             }
         }
@@ -85,16 +88,11 @@ namespace Worker
                     var builder = new NpgsqlConnectionStringBuilder(connectionString)
                     {
                         SslMode = SslMode.VerifyFull, // 인증서를 사용하여 SSL 검증
-                        TrustServerCertificate = false
+                        TrustServerCertificate = false,
+                        RootCertificate = caCertificatePath
                     };
 
                     connection = new NpgsqlConnection(builder.ConnectionString);
-                    connection.ProvideClientCertificatesCallback += certs =>
-                    {
-                        // 인증서 파일 추가
-                        certs.Add(new System.Security.Cryptography.X509Certificates.X509Certificate2(caCertificatePath));
-                    };
-
                     connection.Open();
                     break;
                 }
@@ -110,7 +108,7 @@ namespace Worker
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"Unexpected error while connecting to DB: {ex}");
+                    Console.Error.WriteLine($"Exception during DB connection: {ex.Message}");
                     Thread.Sleep(1000);
                 }
             }
@@ -146,7 +144,7 @@ namespace Worker
                 }
                 catch (Exception ex)
                 {
-                    Console.Error.WriteLine($"Unexpected error while connecting to Redis: {ex}");
+                    Console.Error.WriteLine($"Exception during Redis connection: {ex.Message}");
                     Thread.Sleep(1000);
                 }
             }
@@ -171,7 +169,7 @@ namespace Worker
             }
             catch (DbException ex)
             {
-                Console.Error.WriteLine($"DbException during UpdateVote: {ex.Message}");
+                Console.Error.WriteLine($"DbException during INSERT: {ex.Message}");
                 command.CommandText = "UPDATE votes SET vote = @vote WHERE id = @id";
                 command.ExecuteNonQuery();
             }
