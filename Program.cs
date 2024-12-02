@@ -69,7 +69,7 @@ namespace Worker
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.ToString());
+                Console.Error.WriteLine($"Unexpected error: {ex}");
                 return 1;
             }
         }
@@ -85,7 +85,7 @@ namespace Worker
                     var builder = new NpgsqlConnectionStringBuilder(connectionString)
                     {
                         SslMode = SslMode.VerifyFull, // 인증서를 사용하여 SSL 검증
-                        TrustServerCertificate = false
+                        TrustServerCertificate = true
                     };
 
                     connection = new NpgsqlConnection(builder.ConnectionString);
@@ -98,14 +98,19 @@ namespace Worker
                     connection.Open();
                     break;
                 }
-                catch (SocketException)
+                catch (SocketException ex)
                 {
-                    Console.Error.WriteLine("Waiting for db");
+                    Console.Error.WriteLine($"SocketException: {ex.Message}");
                     Thread.Sleep(1000);
                 }
-                catch (DbException)
+                catch (DbException ex)
                 {
-                    Console.Error.WriteLine("Waiting for db");
+                    Console.Error.WriteLine($"DbException: {ex.Message}");
+                    Thread.Sleep(1000);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Unexpected error while connecting to DB: {ex}");
                     Thread.Sleep(1000);
                 }
             }
@@ -134,9 +139,14 @@ namespace Worker
                     Console.Error.WriteLine("Connecting to redis");
                     return ConnectionMultiplexer.Connect(ipAddress);
                 }
-                catch (RedisConnectionException)
+                catch (RedisConnectionException ex)
                 {
-                    Console.Error.WriteLine("Waiting for redis");
+                    Console.Error.WriteLine($"RedisConnectionException: {ex.Message}");
+                    Thread.Sleep(1000);
+                }
+                catch (Exception ex)
+                {
+                    Console.Error.WriteLine($"Unexpected error while connecting to Redis: {ex}");
                     Thread.Sleep(1000);
                 }
             }
@@ -159,8 +169,9 @@ namespace Worker
                 command.Parameters.AddWithValue("@vote", vote);
                 command.ExecuteNonQuery();
             }
-            catch (DbException)
+            catch (DbException ex)
             {
+                Console.Error.WriteLine($"DbException during UpdateVote: {ex.Message}");
                 command.CommandText = "UPDATE votes SET vote = @vote WHERE id = @id";
                 command.ExecuteNonQuery();
             }
