@@ -85,7 +85,7 @@ namespace Worker
                     var builder = new NpgsqlConnectionStringBuilder(connectionString)
                     {
                         SslMode = SslMode.VerifyFull, // 인증서를 사용하여 SSL 검증
-                        TrustServerCertificate = true
+                        TrustServerCertificate = false
                     };
 
                     connection = new NpgsqlConnection(builder.ConnectionString);
