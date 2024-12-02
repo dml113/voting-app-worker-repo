@@ -23,7 +23,7 @@ namespace Worker
                     "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
                     caCertificatePath);
 
-                var redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
+                var redisConn = OpenRedisConnection("redis.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                 var redis = redisConn.GetDatabase();
 
                 var keepAliveCommand = pgsql.CreateCommand();
@@ -38,7 +38,7 @@ namespace Worker
                     if (redisConn == null || !redisConn.IsConnected)
                     {
                         Console.WriteLine("Reconnecting Redis");
-                        redisConn = OpenRedisConnection("redis-ro.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
+                        redisConn = OpenRedisConnection("redis.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
                         redis = redisConn.GetDatabase();
                     }
 
