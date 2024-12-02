@@ -20,7 +20,7 @@ namespace Worker
                 var caCertificatePath = "/app/rds-ca.pem";
 
                 var pgsql = OpenDbConnection(
-                    "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
+                    "Host=test-postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
                     caCertificatePath);
 
                 var redisConn = OpenRedisConnection("redis.wrwkvd.ng.0001.apn2.cache.amazonaws.com");
@@ -53,7 +53,7 @@ namespace Worker
                         {
                             Console.WriteLine("Reconnecting DB");
                             pgsql = OpenDbConnection(
-                                "Host=postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
+                                "Host=test-postgres.cde69tvxoswa.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;Database=postgres",
                                 caCertificatePath);
                         }
                         else
